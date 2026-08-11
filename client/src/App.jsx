@@ -1,16 +1,36 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import GraphExplorer from "./GraphExplorer";
+import Login from "./Login";
+import Register from "./Register";
 
 const API_URL = "https://skill-graph-cognodb.onrender.com";
 
 function App() {
-  const [users, setUsers] = useState(["Ravi", "Sukanya"]);
-  const [selectedUser, setSelectedUser] = useState("Ravi");
-  const [careerPaths, setCareerPaths] = useState([]);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
+  const [showRegister, setShowRegister] = useState(false);
+
+  const selectedUser = currentUser?.name || "";
+
+  const [careerPaths, setCareerPaths] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    setShowRegister(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setCurrentUser(null);
+    setCareerPaths([]);
+  };
 
   const fetchCareerPaths = async (userName) => {
     setLoading(true);
@@ -35,6 +55,7 @@ function App() {
       setCareerPaths(result.data);
     } catch (error) {
       console.error("Career path error:", error);
+
       setError(
         "Unable to connect to the SkillGraph server. Please make sure the backend is running."
       );
@@ -44,19 +65,39 @@ function App() {
   };
 
   useEffect(() => {
-    fetchCareerPaths(selectedUser);
+    if (selectedUser) {
+      fetchCareerPaths(selectedUser);
+    }
   }, [selectedUser]);
 
   const skills = [
     ...new Set(careerPaths.map((path) => path.skill)),
   ];
 
+  if (!currentUser) {
+    if (showRegister) {
+      return (
+        <Register
+          onRegister={() => setShowRegister(false)}
+          onShowLogin={() => setShowRegister(false)}
+        />
+      );
+    }
+
+    return (
+      <Login
+        onLogin={handleLogin}
+        onShowRegister={() => setShowRegister(true)}
+      />
+    );
+  }
+
   return (
     <div className="app">
       {/* Header */}
       <header className="header">
         <div className="brand">
-          <div className="brand-icon">S</div>
+          <div className="brand-mark">S</div>
 
           <div>
             <h1>SkillGraph</h1>
@@ -75,7 +116,9 @@ function App() {
         {/* Hero */}
         <section className="hero">
           <div className="hero-content">
-            <span className="eyebrow">GRAPH-POWERED CAREER EXPLORER</span>
+            <span className="eyebrow">
+              GRAPH-POWERED CAREER EXPLORER
+            </span>
 
             <h2>
               Discover where your
@@ -84,8 +127,8 @@ function App() {
             </h2>
 
             <p>
-              Explore the connection between your skills, career opportunities,
-              and companies using SkillGraph.
+              Explore the connection between your skills, career
+              opportunities, and companies using SkillGraph.
             </p>
           </div>
         </section>
@@ -98,24 +141,21 @@ function App() {
             <h3>Explore your career path</h3>
 
             <p className="muted">
-              Choose a user to discover connected skills, jobs and companies.
+              Discover connected skills, jobs and companies.
             </p>
           </div>
 
           <div className="select-wrapper">
-            <label htmlFor="user-select">User</label>
+            <label>User</label>
 
-            <select
-              id="user-select"
-              value={selectedUser}
-              onChange={(event) => setSelectedUser(event.target.value)}
+            <strong>{currentUser.name}</strong>
+
+            <button
+              type="button"
+              onClick={handleLogout}
             >
-              {users.map((user) => (
-                <option key={user} value={user}>
-                  {user}
-                </option>
-              ))}
-            </select>
+              Logout
+            </button>
           </div>
         </section>
 
@@ -126,6 +166,7 @@ function App() {
 
             <div>
               <h3>Connection problem</h3>
+
               <p>{error}</p>
 
               <button
@@ -145,6 +186,7 @@ function App() {
 
             <div>
               <h3>Finding career connections...</h3>
+
               <p>
                 SkillGraph is traversing your skills, jobs and companies.
               </p>
@@ -158,7 +200,10 @@ function App() {
             <section className="section">
               <div className="section-heading">
                 <div>
-                  <p className="section-label">CONNECTED SKILLS</p>
+                  <p className="section-label">
+                    CONNECTED SKILLS
+                  </p>
+
                   <h3>{selectedUser}'s Skills</h3>
                 </div>
 
@@ -169,24 +214,32 @@ function App() {
 
               <div className="skills-grid">
                 {skills.map((skill) => (
-                  <div className="skill-card" key={skill}>
+                  <div
+                    className="skill-card"
+                    key={skill}
+                  >
                     <div className="skill-icon">✦</div>
+
                     <span>{skill}</span>
                   </div>
                 ))}
               </div>
             </section>
+
             {/* Graph Explorer */}
             <GraphExplorer
-            user={selectedUser}
-            paths={careerPaths}
+              user={selectedUser}
+              paths={careerPaths}
             />
 
             {/* Career Paths */}
             <section className="section">
               <div className="section-heading">
                 <div>
-                  <p className="section-label">GRAPH TRAVERSAL</p>
+                  <p className="section-label">
+                    GRAPH TRAVERSAL
+                  </p>
+
                   <h3>Career Opportunities</h3>
                 </div>
 
@@ -207,21 +260,30 @@ function App() {
 
                     <div className="path">
                       <div className="path-item">
-                        <span className="path-type">SKILL</span>
+                        <span className="path-type">
+                          SKILL
+                        </span>
+
                         <strong>{path.skill}</strong>
                       </div>
 
                       <div className="path-line"></div>
 
                       <div className="path-item">
-                        <span className="path-type">JOB</span>
+                        <span className="path-type">
+                          JOB
+                        </span>
+
                         <strong>{path.job}</strong>
                       </div>
 
                       <div className="path-line"></div>
 
                       <div className="path-item company-item">
-                        <span className="path-type">COMPANY</span>
+                        <span className="path-type">
+                          COMPANY
+                        </span>
+
                         <strong>{path.company}</strong>
                       </div>
                     </div>
@@ -233,18 +295,22 @@ function App() {
         )}
 
         {/* Empty state */}
-        {!loading && !error && careerPaths.length === 0 && (
-          <section className="message-card">
-            <div className="message-icon">?</div>
+        {!loading &&
+          !error &&
+          careerPaths.length === 0 && (
+            <section className="message-card">
+              <div className="message-icon">?</div>
 
-            <div>
-              <h3>No career paths found</h3>
-              <p>
-                There are currently no connected career paths for this user.
-              </p>
-            </div>
-          </section>
-        )}
+              <div>
+                <h3>No career paths found</h3>
+
+                <p>
+                  There are currently no connected career
+                  paths for this user.
+                </p>
+              </div>
+            </section>
+          )}
       </main>
 
       {/* Footer */}

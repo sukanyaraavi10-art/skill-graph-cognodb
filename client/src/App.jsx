@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import GraphExplorer from "./GraphExplorer";
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://skill-graph-cognodb.onrender.com";
 
 function App() {
   const [users, setUsers] = useState(["Ravi", "Sukanya"]);

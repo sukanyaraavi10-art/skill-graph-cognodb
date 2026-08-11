@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)https://skill-graph-client.onrender.com/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <link rel="icon" type="image/svg+xml" href="https://skill-graph-client.onrender.com/favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>client</title>
+    <script type="module" crossorigin="" src="./login_files/index-BOGWQQul.js.download"></script>
+    <link rel="stylesheet" crossorigin="" href="./login_files/index-Dec3DaFx.css">
+  </head>
+  <body>
+    <div id="root"><div class="auth-page"><div class="auth-card"><h1>SkillGraph</h1><p>Login to explore your career graph</p><form><label>Email</label><input placeholder="Enter your email" required="" type="email" value="" fdprocessedid="zx772"><label>Password</label><input placeholder="Enter your password" required="" type="password" value="" fdprocessedid="x1l42"><button type="submit" fdprocessedid="dfyafd">Login</button></form><p>Don't have an account? <button type="button" fdprocessedid="1zheuo">Register</button></p></div></div></div>
+  
+
+<span id="PING_IFRAME_FORM_DETECTION" style="display: none;"></span></body></html>

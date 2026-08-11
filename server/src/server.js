@@ -2,14 +2,163 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import driver from "./database.js";
-
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 dotenv.config();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+const JWT_SECRET = process.env.JWT_SECRET;
+// Register
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Name, email and password are required"
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters"
+    });
+  }
+
+  const session = driver.session();
+
+  try {
+    const existingUser = await session.run(
+      `
+      MATCH (u:User {email: $email})
+      RETURN u
+      LIMIT 1
+      `,
+      { email }
+    );
+
+    if (existingUser.records.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered"
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await session.run(
+      `
+      CREATE (u:User {
+        name: $name,
+        email: $email,
+        passwordHash: $passwordHash
+      })
+      `,
+      {
+        name,
+        email,
+        passwordHash
+      }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Registration successful"
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to register user"
+    });
+  } finally {
+    await session.close();
+  }
+});
+
+// Login
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required"
+    });
+  }
+
+  const session = driver.session();
+
+  try {
+    const result = await session.run(
+      `
+      MATCH (u:User {email: $email})
+      RETURN u.name AS name,
+             u.email AS email,
+             u.passwordHash AS passwordHash
+      LIMIT 1
+      `,
+      { email }
+    );
+
+    if (result.records.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
+    const user = result.records[0];
+
+    const name = user.get("name");
+    const userEmail = user.get("email");
+    const passwordHash = user.get("passwordHash");
+
+    const passwordMatch = await bcrypt.compare(password, passwordHash);
+
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        email: userEmail,
+        name
+      },
+      JWT_SECRET,
+      {
+        expiresIn: "7d"
+      }
+    );
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        name,
+        email: userEmail
+      }
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to login"
+    });
+  } finally {
+    await session.close();
+  }
+});
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({
